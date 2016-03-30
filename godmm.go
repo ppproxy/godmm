@@ -8,10 +8,17 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/junzh0u/opendmm"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
-func search(query string) {
-	metach := opendmm.Search(query)
+func search(query, cachepath string) {
+	cache, err := leveldb.OpenFile(cachepath, nil)
+	if err != nil {
+		glog.Fatal(err)
+	}
+	defer cache.Close()
+
+	metach := opendmm.Search(query, cache)
 	select {
 	case meta, ok := <-metach:
 		if ok {
@@ -27,11 +34,18 @@ func search(query string) {
 
 func main() {
 	flag.Set("stderrthreshold", "FATAL")
+	movieCachePath := flag.String("moviecache", "/tmp/opendmm.movie.cache", "path to http cache")
+	httpCachePath := flag.String("httpcache", "/tmp/opendmm.http.cache", "path to http cache")
 	flag.Parse()
+
 	switch flag.Arg(0) {
 	case "search":
-		search(flag.Arg(1))
+		search(flag.Arg(1), *movieCachePath)
+
+	case "crawl":
+		opendmm.Crawl(*movieCachePath, *httpCachePath)
+
 	default:
-		search(flag.Arg(0))
+		search(flag.Arg(0), *movieCachePath)
 	}
 }
