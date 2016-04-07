@@ -42,6 +42,11 @@ func main() {
 	case "search":
 		search(flag.Arg(1), *movieCachePath)
 
+	case "guess":
+		for keyword := range opendmm.Guess(flag.Arg(1)).Iter() {
+			fmt.Println(keyword)
+		}
+
 	case "crawl":
 		opendmm.Crawl(*movieCachePath, *httpCachePath)
 
